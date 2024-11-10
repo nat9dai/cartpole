@@ -19,10 +19,10 @@ tcp_server_name1 = "OpEn/python_cartpole_" + str(sampler_period) + \
                 "/cartpole_" + str(sampler_period)
 mng1 = og.tcp.OptimizerTcpManager(tcp_server_name1.replace(".", "_"), port=8333)
 tcp_server_name2 = "OpEn/python_cartpole_lifting_" + str(sampler_period) + \
-                "/cartpole_lifting_n10_" + str(sampler_period)
+                "/cartpole_lifting_" + str(sampler_period)
 mng2 = og.tcp.OptimizerTcpManager(tcp_server_name2.replace(".", "_"), port=8334)
 tcp_server_name3 = "OpEn/python_cartpole_lifting_2_" + str(sampler_period) + \
-                "/cartpole_lifting_2_n10_new_" + str(sampler_period)
+                "/cartpole_lifting_2_" + str(sampler_period)
 mng3 = og.tcp.OptimizerTcpManager(tcp_server_name3.replace(".", "_"), port=8335)
 
 mng1.start()
