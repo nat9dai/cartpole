@@ -1,4 +1,5 @@
 import opengen as og
+import casadi as cs
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -8,7 +9,7 @@ import tikzplotlib
 
 sampling_time_control = 0.05
 ################### Change this parameter ###################
-sampler_period = 0.1 # 0.1, 0.25, 0.5
+sampler_period = 0.5 # 0.1, 0.25, 0.5
 #############################################################
 
 N_P = int(sampler_period/sampling_time_control)
@@ -43,20 +44,19 @@ dim = 4
 #sampling_time_sim = sampler_period/10
 sampling_time_sim = 0.001
 
-simulation_steps = int(20 / sampling_time_sim)
+simulation_steps = int(10 / sampling_time_sim)
 
 def dynamics_ct(x, u):
     dx1 = x[2]
     dx2 = x[3]
-    dx3 = (-mass_pole*length*np.sin(x[1])*x[3]**2 \
-           + mass_pole*gravity_acceleration*np.sin(x[1])*np.cos(x[1])
-           + u) / (mass_cart+mass_pole*np.sin(x[1])**2)
-    dx4 = (-mass_pole*length*np.sin(x[1])*np.cos(x[1])*x[3]**2 \
-           + (mass_cart+mass_pole)*gravity_acceleration*np.sin(x[1]) \
-           + u*np.cos(x[1])) / (length*(mass_cart+mass_pole*np.sin(x[1])**2))
+    dx3 = (-mass_pole*length*cs.sin(x[1])*x[3]**2 \
+           + mass_pole*gravity_acceleration*cs.sin(x[1])*cs.cos(x[1])
+           + u) / (mass_cart+mass_pole*cs.sin(x[1])**2)
+    dx4 = (-mass_pole*length*cs.sin(x[1])*cs.cos(x[1])*x[3]**2 \
+           + (mass_cart+mass_pole)*gravity_acceleration*cs.sin(x[1]) \
+           + u*cs.cos(x[1])) / (length*(mass_cart+mass_pole*cs.sin(x[1])**2))
     return [dx1, dx2, dx3, dx4]
 
-# RK4
 def dynamics_dt(x, u, sampling_time_sim):
     k1 = dynamics_ct(x, u)
 
@@ -76,8 +76,8 @@ x1 = x_state_0
 state_sequence_1 = []
 us = [0]*T  # Initial control input
 u_sequence_1 = []
-control_interval = int(sampling_time_control / sampling_time_sim)
-sampler_interval = int(sampler_period / sampling_time_sim)
+control_interval = int(sampling_time_control / sampling_time_sim) # 50
+sampler_interval = int(sampler_period / sampling_time_sim) # 100 250 500
 sampler_interval_test = int(1.0/sampling_time_sim)
 
 for k in range(simulation_steps):
@@ -113,6 +113,11 @@ for k in range(simulation_steps):
 
     x2 = x2_next
 
+def shift_left(L, N):
+    shifted_list = L[N:]
+    shifted_list.extend([shifted_list[-1]] * (N))
+    return shifted_list
+
 x3 = x_state_0
 state_sequence_3 = []
 us = [0]*N_P*T  # Initial control input
@@ -125,7 +130,7 @@ u_sequence_3_test_2 = []
 cost_list = []
 for k in range(simulation_steps):
     if k % sampler_interval == 0:
-        solver_status = mng3.call(x3, initial_guess=us)
+        solver_status = mng3.call(x3, initial_guess=shift_left(us, N_P))
         #solver_status = mng3.call(x3)
         us = solver_status['solution']
         #print(solver_status.keys())
@@ -143,7 +148,7 @@ for k in range(simulation_steps):
                 u_sequence_3_test.append(us[i])
         #print(total_cost(x3, u_sequence_3_test))
 
-    if k == int(4.6/sampling_time_sim):
+    if k == int(4.75/sampling_time_sim):
         for i in range(T*N_P):
             for j in range(int(1000/(N_P*T))):
                 u_sequence_3_test_2.append(us[i])
@@ -157,13 +162,6 @@ for k in range(simulation_steps):
     u_sequence_3.append(u3)
 
     x3 = x3_next
-
-u_test_1 = range(T)
-u_test_2 = []
-for i in u_test_1:
-    for j in range(N_P):
-        u_test_2.append(i)
-x_test = [0,np.pi,0,0]
 
 # Convert state_sequence into a flattened list for plotting
 state_sequence_1_flat = [item for sublist in state_sequence_1 for item in sublist]
@@ -246,7 +244,7 @@ plt.plot(time, u_sequence_1, 'b-', label="NMPC")
 plt.plot(time, u_sequence_2, 'r--', label="Lifted NMPC 1")
 plt.plot(time, u_sequence_3, 'g-', label="Lifted NMPC 2")
 time_test = np.arange(4.5, 5.5, sampling_time_sim)
-time_test2 = np.arange(4.6, 5.6, sampling_time_sim)
+time_test2 = np.arange(4.75, 5.75, sampling_time_sim)
 plt.plot(time_test, u_sequence_3_test, 'k-', label="Lifted NMPC 2 (Test 1)")
 plt.plot(time_test2, u_sequence_3_test_2, 'm-', label="Lifted NMPC 2 (Test 2)")
 plt.ylabel(r'Control Input: $u$')
