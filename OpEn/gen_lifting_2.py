@@ -12,7 +12,7 @@ dim = 4
 horizon_time = 1.0
 
 ################## Change this parameters ##################
-sampling_time = 0.5 # 0.1, 0.25, 0.5
+sampling_time = 0.1 # 0.1, 0.25, 0.5
 #############################################################
 control_sampling_time = 0.05
 N_P = int(sampling_time/control_sampling_time)   # 2, 5, 10
@@ -46,16 +46,26 @@ def dynamics_dt(x, u, h):
     x_next = [x[i] + (h / 6.0) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) for i in range(dim)]
     return x_next
 
-def stage_cost(x):
-    cost = 5*x[0]**2 + 20*x[1]**2 + 0.02*x[2]**2 + 0.02*x[3]**2
+def stage_cost(x, u, Q, R):
+    #cost = 5*x[0]**2 + 20*x[1]**2 + 0.02*x[2]**2 + 0.02*x[3]**2 + 0.1*u**2
+    cost = Q[0]*x[0]**2 + Q[1]*x[1]**2 + Q[2]*x[2]**2 + Q[3]*x[3]**2 + R*u**2
     return cost
 
-def terminal_cost(x):
-    cost = 6*x[0]**2 + 30*x[1]**2 + 0.04*x[2]**2 + 0.04*x[3]**2
+def stage_cost_2(x, Q):
+    #cost = 5*x[0]**2 + 20*x[1]**2 + 0.02*x[2]**2 + 0.02*x[3]**2
+    cost = Q[0]*x[0]**2 + Q[1]*x[1]**2 + Q[2]*x[2]**2 + Q[3]*x[3]**2
+    return cost
+
+def terminal_cost(x, Q):
+    #cost = 6*x[0]**2 + 30*x[1]**2 + 0.04*x[2]**2 + 0.04*x[3]**2
+    cost = Q[0]*x[0]**2 + Q[1]*x[1]**2 + Q[2]*x[2]**2 + Q[3]*x[3]**2
     return cost
 
 u_seq = cs.MX.sym("u", T*N_P)  # sequence of all u's
 x0 = cs.MX.sym("x0", dim)   # initial state
+Q = cs.MX.sym("Q", dim)
+Qt = cs.MX.sym("Qt", dim)
+R = cs.MX.sym("R", 1)
 
 x_t = x0
 total_cost = 0
@@ -69,22 +79,39 @@ u_index = 0
 for i in range(0,T):
     for j in range(0,N):
         # use Simpson's rule to approximate the integral
-        integral = stage_cost(x_t)
+        integral = stage_cost_2(x_t, Q)
         x_t_mid = dynamics_dt(x_t, u_seq[u_index], sampling_div_2N)
-        integral += 4 * stage_cost(x_t_mid)
+        integral += 4 * stage_cost_2(x_t_mid, Q)
         x_t = dynamics_dt(x_t, u_seq[u_index], sampling_div_N)
-        integral += stage_cost(x_t)
+        integral += stage_cost_2(x_t, Q)
         total_cost += integral / (6*N)
         if (j % (N / N_P) == (N / N_P) - 1):
             total_cost += (0.1/N_P)*u_seq[u_index]**2
             u_index += 1
 
-total_cost += terminal_cost(x_t)
+total_cost += terminal_cost(x_t, Qt)
 
-U = og.constraints.BallInf(None, 20)
+optimization_variables = []
+optimization_parameters = []
 
-problem = og.builder.Problem(u_seq, x0, total_cost)  \
-            .with_constraints(U)
+optimization_variables += [u_seq]
+optimization_parameters += [x0]
+optimization_parameters += [Q]
+optimization_parameters += [Qt]
+optimization_parameters += [R]
+
+optimization_variables = cs.vertcat(*optimization_variables)
+optimization_parameters = cs.vertcat(*optimization_parameters)
+
+umin = [-20] * T * N_P
+umax = [20] * T * N_P
+
+bounds = og.constraints.Rectangle(umin, umax)
+
+problem = og.builder.Problem(optimization_variables,
+                             optimization_parameters,
+                             total_cost) \
+    .with_constraints(bounds)
 
 build_dir_name = "python_cartpole_lifting_2_"+str(sampling_time)
 build_config = og.config.BuildConfiguration()  \

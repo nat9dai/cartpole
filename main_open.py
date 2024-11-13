@@ -9,7 +9,7 @@ import tikzplotlib
 
 sampling_time_control = 0.05
 ################### Change this parameter ###################
-sampler_period = 0.5 # 0.1, 0.25, 0.5
+sampler_period = 0.1 # 0.1, 0.25, 0.5
 #############################################################
 
 N_P = int(sampler_period/sampling_time_control)
@@ -31,6 +31,9 @@ mng2.start()
 mng3.start()
 
 x_state_0 = [0,np.pi,0,0]
+Q = [5, 20, 0.02, 0.02]
+Qt = [6, 30, 0.04, 0.04]
+R = [0.1]
 
 state_sequence = []
 input_sequence = []
@@ -82,8 +85,8 @@ sampler_interval_test = int(1.0/sampling_time_sim)
 
 for k in range(simulation_steps):
     if k % sampler_interval == 0:
-        solver_status = mng1.call(x1, initial_guess=us)
-        #solver_status = mng1.call(x1)
+        solver_status = mng1.call(x1+Q+Qt+R, initial_guess=us)
+        #solver_status = mng1.call(x1+Q+Qt+R)
         us = solver_status['solution']
         u1 = us[0]
 
@@ -101,8 +104,8 @@ u_sequence_2 = []
 
 for k in range(simulation_steps):
     if k % sampler_interval == 0:
-        solver_status = mng2.call(x2, initial_guess=us)
-        #solver_status = mng2.call(x2)
+        solver_status = mng2.call(x2+Q+Qt+R, initial_guess=us)
+        #solver_status = mng2.call(x2+Q+Qt+R)
         us = solver_status['solution']
         u2 = us[0]
 
@@ -130,8 +133,8 @@ u_sequence_3_test_2 = []
 cost_list = []
 for k in range(simulation_steps):
     if k % sampler_interval == 0:
-        solver_status = mng3.call(x3, initial_guess=shift_left(us, N_P))
-        #solver_status = mng3.call(x3)
+        solver_status = mng3.call(x3+Q+Qt+R, initial_guess=shift_left(us, N_P))
+        #solver_status = mng3.call(x3+Q+Qt+R)
         us = solver_status['solution']
         #print(solver_status.keys())
         #print(solver_status['num_inner_iterations'], solver_status['num_outer_iterations']) 

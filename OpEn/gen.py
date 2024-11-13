@@ -41,29 +41,51 @@ def dynamics_dt(x, u, h):
     x_next = [x[i] + (h / 6.0) * (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) for i in range(dim)]
     return x_next
 
-def stage_cost(x, u):
-    cost = 5*x[0]**2 + 20*x[1]**2 + 0.02*x[2]**2 + 0.02*x[3]**2 + 0.1*u**2
+def stage_cost(x, u, Q, R):
+    #cost = 5*x[0]**2 + 20*x[1]**2 + 0.02*x[2]**2 + 0.02*x[3]**2 + 0.1*u**2
+    cost = Q[0]*x[0]**2 + Q[1]*x[1]**2 + Q[2]*x[2]**2 + Q[3]*x[3]**2 + R*u**2
     return cost
 
-def terminal_cost(x):
-    cost = 6*x[0]**2 + 30*x[1]**2 + 0.04*x[2]**2 + 0.04*x[3]**2
+def terminal_cost(x, Q):
+    #cost = 6*x[0]**2 + 30*x[1]**2 + 0.04*x[2]**2 + 0.04*x[3]**2
+    cost = Q[0]*x[0]**2 + Q[1]*x[1]**2 + Q[2]*x[2]**2 + Q[3]*x[3]**2
     return cost
 
 u_seq = cs.MX.sym("u", T)  # sequence of all u's
 x0 = cs.MX.sym("x0", dim)   # initial state
+Q = cs.MX.sym("Q", dim)
+Qt = cs.MX.sym("Qt", dim)
+R = cs.MX.sym("R", 1)
 
 x_t = x0
 total_cost = 0
 for t in range(0, T):
-    total_cost += stage_cost(x_t, u_seq[t])  # update cost
+    total_cost += stage_cost(x_t, u_seq[t], Q, R)  # update cost
     x_t = dynamics_dt(x_t, u_seq[t], sampling_time)         # update state
 
-total_cost += terminal_cost(x_t)  # terminal cost
+total_cost += terminal_cost(x_t, Qt)  # terminal cost
 
-U = og.constraints.BallInf(None, 20)
+optimization_variables = []
+optimization_parameters = []
 
-problem = og.builder.Problem(u_seq, x0, total_cost)  \
-            .with_constraints(U)
+optimization_variables += [u_seq]
+optimization_parameters += [x0]
+optimization_parameters += [Q]
+optimization_parameters += [Qt]
+optimization_parameters += [R]
+
+optimization_variables = cs.vertcat(*optimization_variables)
+optimization_parameters = cs.vertcat(*optimization_parameters)
+
+umin = [-20] * T
+umax = [20] * T
+
+bounds = og.constraints.Rectangle(umin, umax)
+
+problem = og.builder.Problem(optimization_variables,
+                             optimization_parameters,
+                             total_cost) \
+    .with_constraints(bounds)
 
 build_dir_name = "python_cartpole_"+str(sampling_time)
 build_config = og.config.BuildConfiguration()  \
