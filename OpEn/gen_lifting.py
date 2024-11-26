@@ -11,7 +11,7 @@ dim = 4
 # Time parameters
 horizon_time = 1.0
 ################## Change these parameters ##################
-sampling_time = 0.05 # 0.1, 0.25, 0.5
+sampling_time = 0.25 # 0.1, 0.25, 0.5
 approach = 1 # 1, 2
 #########################################################
 N = 10

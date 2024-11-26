@@ -36,15 +36,15 @@ mng3.start()
 mng4.start()
 
 x_state_0 = [0,np.pi,0,0]
-Q = [10, 30, 0.4, 6]
-Qt = [20, 60, 0.8, 12]
-#Q = [5, 20, 0.02, 0.02]
-#Qt = [6, 30, 0.04, 0.04]
+#Q = [10, 30, 0.4, 3]
+#Qt = [20, 40, 0.8, 6]
+Q = [5, 20, 0.02, 2]
+Qt = [6, 30, 0.04, 4]
 R = [0.1]
 # parameter for lifted 2
-Rtr = [0.05] # default = 0
-gamma = [0.99] # [0,1] default = 1
-lambda_ = [0.99] #[0,1] default = 1
+Rtr = [0.0] # default = 0
+gamma =[1] # [0,1] default = 1
+lambda_ = [1] #[0,1] default = 1
 
 state_sequence = []
 input_sequence = []
@@ -136,7 +136,7 @@ u_sequence_3_test_2 = []
 cost_list = []
 for k in range(simulation_steps):
     if k % sampler_interval == 0:
-        solver_status = mng3.call(x3+Q+Qt+R+[0]+[0]+us[N_P:2*N_P]+[1.0], initial_guess=shift_left(us, N_P))
+        solver_status = mng3.call(x3+Q+Qt+R+[0.0]+[1.0]+us[N_P:2*N_P]+[1.0], initial_guess=shift_left(us, N_P))
         #solver_status = mng3.call(x3+Q+Qt+R)
         us = solver_status['solution']
         #print(solver_status.keys())
@@ -217,12 +217,13 @@ plt.subplot(4, 1, 1)
 plt.plot(time, state_sequence_1_flat[0::4], 'b-', label="NMPC")
 plt.plot(time, state_sequence_2_flat[0::4], 'r--', label="Lifted NMPC 1")
 plt.plot(time, state_sequence_3_flat[0::4], 'g-', label="Lifted NMPC 2")
-plt.plot(time, state_sequence_4_flat[0::4], 'k-', label="Lifted NMPC 2 Improved")
+#plt.plot(time, state_sequence_4_flat[0::4], 'k-', label="Lifted NMPC 2 Improved")
 plt.ylabel(r'$x_1$ (m)')
 plt.xlabel('Time (s)')
 plt.grid(True)
 plt.legend(loc='upper right')
 plt.xlim(left=0, right=right_limit)  # Set both left and right limits for the x-axis
+plt.title('Samping time = ' + str(sampler_period) + 's')
 #plt.title("Sampling Period: " + str(sampler_period) + "s" + " Control Period: " + str(sampling_time_control) + "s")
 #tikzplotlib.save("icp1.tex")
 
@@ -231,12 +232,13 @@ plt.subplot(4, 1, 2)
 plt.plot(time, state_sequence_1_flat[1::4], 'b-', label="NMPC")
 plt.plot(time, state_sequence_2_flat[1::4], 'r--', label="Lifted NMPC 1")
 plt.plot(time, state_sequence_3_flat[1::4], 'g-', label="Lifted NMPC 2")
-plt.plot(time, state_sequence_4_flat[1::4], 'k-', label="Lifted NMPC 2 Improved")
+#plt.plot(time, state_sequence_4_flat[1::4], 'k-', label="Lifted NMPC 2 Improved")
 plt.ylabel(r'$x_2$ (rad)')
 plt.xlabel('Time (s)')
 plt.grid(True)
 plt.legend(loc='upper right')
 plt.xlim(left=0, right=right_limit)  # Set both left and right limits for the x-axis
+plt.title('Samping time = ' + str(sampler_period) + 's')
 #plt.title("Sampling Period: " + str(sampler_period) + "s" + " Control Period: " + str(sampling_time_control) + "s")
 #tikzplotlib.save("icp2.tex")
 
@@ -245,12 +247,13 @@ plt.subplot(4, 1, 3)
 plt.plot(time, state_sequence_1_flat[2::4], 'b-', label="NMPC")
 plt.plot(time, state_sequence_2_flat[2::4], 'r--', label="Lifted NMPC 1")
 plt.plot(time, state_sequence_3_flat[2::4], 'g-', label="Lifted NMPC 2")
-plt.plot(time, state_sequence_4_flat[2::4], 'k-', label="Lifted NMPC 2 Improved")
+#plt.plot(time, state_sequence_4_flat[2::4], 'k-', label="Lifted NMPC 2 Improved")
 plt.ylabel(r'$x_3$ (m/s)')
 plt.xlabel('Time (s)')
 plt.grid(True)
 plt.legend(loc='lower right')
 plt.xlim(left=0, right=right_limit)  # Set both left and right limits for the x-axis
+plt.title('Samping time = ' + str(sampler_period) + 's')
 #plt.title("Sampling Period: " + str(sampler_period) + "s" + " Control Period: " + str(sampling_time_control) + "s")
 #tikzplotlib.save("icp3.tex")
 
@@ -259,12 +262,13 @@ plt.subplot(4, 1, 4)
 plt.plot(time, state_sequence_1_flat[3::4], 'b-', label="NMPC")
 plt.plot(time, state_sequence_2_flat[3::4], 'r--', label="Lifted NMPC 1")
 plt.plot(time, state_sequence_3_flat[3::4], 'g-', label="Lifted NMPC 2")
-plt.plot(time, state_sequence_4_flat[3::4], 'k-', label="Lifted NMPC 2 Improved")
+#plt.plot(time, state_sequence_4_flat[3::4], 'k-', label="Lifted NMPC 2 Improved")
 plt.ylabel(r'$x_4$ (rad/s)')
 plt.xlabel('Time (s)')
 plt.grid(True)
 plt.legend(loc='lower right')
 plt.xlim(left=0, right=right_limit)  # Set both left and right limits for the x-axis
+plt.title('Samping time = ' + str(sampler_period) + 's')
 plt.tight_layout()
 #plt.title("Sampling Period: " + str(sampler_period) + "s" + " Control Period: " + str(sampling_time_control) + "s")
 #tikzplotlib.save("icp4.tex")
@@ -276,7 +280,7 @@ plt.figure(figsize=(8, 6))
 plt.plot(time, u_sequence_1, 'b-', label="NMPC")
 plt.plot(time, u_sequence_2, 'r--', label="Lifted NMPC 1")
 plt.plot(time, u_sequence_3, 'g-', label="Lifted NMPC 2")
-plt.plot(time, u_sequence_4, 'k-', label="Lifted NMPC 2 Improved")
+#plt.plot(time, u_sequence_4, 'k-', label="Lifted NMPC 2 Improved")
 #time_test = np.arange(4.5, 5.5, sampling_time_sim)
 #time_test2 = np.arange(4.6, 5.6, sampling_time_sim)
 #plt.plot(time_test, u_sequence_3_test, 'k-', label="Lifted NMPC 2 (Test 1)")
@@ -286,6 +290,7 @@ plt.xlabel('Time (s)')
 plt.grid(True)
 plt.legend(loc='lower right')
 plt.xlim(left=0, right=right_limit)  # Set both left and right limits for the x-axis
+plt.title('Samping time = ' + str(sampler_period) + 's')
 plt.tight_layout() 
 #plt.title("Sampling Period: " + str(sampler_period) + "s" + " Control Period: " + str(sampling_time_control) + "s")
 #tikzplotlib.save("icp5.tex")
@@ -333,12 +338,13 @@ plt.figure(figsize=(8, 6))
 plt.plot(time, state_norms_1, 'b-', label="NMPC")
 plt.plot(time, state_norms_2, 'r--', label="Lifted NMPC 1")
 plt.plot(time, state_norms_3, 'g-', label="Lifted NMPC 2")
-plt.plot(time, state_norms_4, 'k-', label="Lifted NMPC 2 Improved")
+#plt.plot(time, state_norms_4, 'k-', label="Lifted NMPC 2 Improved")
 plt.ylabel(r'$||e||_{2}$') 
 plt.xlabel('Time (s)')
 plt.grid(True)
 plt.legend(loc='upper right')
 plt.xlim(left=0, right=right_limit)  # Set both left and right limits for the x-axis
+plt.title('Samping time = ' + str(sampler_period) + 's')
 plt.tight_layout() 
 
 plt.show()

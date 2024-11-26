@@ -12,7 +12,7 @@ dim = 4
 horizon_time = 1.0
 
 ################## Change this parameters ##################
-sampling_time = 0.5 # 0.1, 0.25, 0.5
+sampling_time = 0.25 # 0.1, 0.25, 0.5
 #############################################################
 control_sampling_time = 0.05
 N_P = int(sampling_time/control_sampling_time)   # 2, 5, 10
@@ -94,8 +94,8 @@ for i in range(0,T):
             u_index += 1
 
 total_cost += (lambda_**(N+N*T))*terminal_cost(x_t, Qt)
-for k in range(N_P):
-    total_cost += (Rtr*gamma**k)*(u_seq[k] - u_tr[k])**2
+#for k in range(N_P):
+#    total_cost += (Rtr*gamma**k)*(u_seq[k] - u_tr[k])**2
 
 optimization_variables = []
 optimization_parameters = []
