@@ -12,7 +12,7 @@ dim = 4
 horizon_time = 1.0
 
 ################## Change this parameters ##################
-sampling_time = 0.1 # 0.1, 0.25, 0.5
+sampling_time = 0.5 # 0.1, 0.25, 0.5
 #############################################################
 control_sampling_time = 0.05
 N_P = int(sampling_time/control_sampling_time)   # 2, 5, 10
@@ -66,6 +66,10 @@ x0 = cs.MX.sym("x0", dim)   # initial state
 Q = cs.MX.sym("Q", dim)
 Qt = cs.MX.sym("Qt", dim)
 R = cs.MX.sym("R", 1)
+Rtr = cs.MX.sym("Rtr", 1)
+gamma = cs.MX.sym("gamma", 1)
+u_tr = cs.MX.sym("u_tr", N_P)
+lambda_ = cs.MX.sym("lambda_", 1)
 
 x_t = x0
 total_cost = 0
@@ -79,17 +83,19 @@ u_index = 0
 for i in range(0,T):
     for j in range(0,N):
         # use Simpson's rule to approximate the integral
-        integral = stage_cost_2(x_t, Q)
+        integral = (lambda_**(j+N*i))*stage_cost_2(x_t, Q)
         x_t_mid = dynamics_dt(x_t, u_seq[u_index], sampling_div_2N)
-        integral += 4 * stage_cost_2(x_t_mid, Q)
+        integral += (lambda_**(j+N*i))*4 * stage_cost_2(x_t_mid, Q)
         x_t = dynamics_dt(x_t, u_seq[u_index], sampling_div_N)
-        integral += stage_cost_2(x_t, Q)
+        integral += (lambda_**(j+N*i))*stage_cost_2(x_t, Q)
         total_cost += integral / (6*N)
         if (j % (N / N_P) == (N / N_P) - 1):
-            total_cost += (0.1/N_P)*u_seq[u_index]**2
+            total_cost += (lambda_**(j+N*i))*(0.1/N_P)*u_seq[u_index]**2
             u_index += 1
 
-total_cost += terminal_cost(x_t, Qt)
+total_cost += (lambda_**(N+N*T))*terminal_cost(x_t, Qt)
+for k in range(N_P):
+    total_cost += (Rtr*gamma**k)*(u_seq[k] - u_tr[k])**2
 
 optimization_variables = []
 optimization_parameters = []
@@ -99,6 +105,10 @@ optimization_parameters += [x0]
 optimization_parameters += [Q]
 optimization_parameters += [Qt]
 optimization_parameters += [R]
+optimization_parameters += [Rtr]
+optimization_parameters += [gamma]
+optimization_parameters += [u_tr]
+optimization_parameters += [lambda_]
 
 optimization_variables = cs.vertcat(*optimization_variables)
 optimization_parameters = cs.vertcat(*optimization_parameters)
