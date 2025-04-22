@@ -12,24 +12,53 @@ dim = 4
 T = 20
 sampling_time = 0.05
 
-def state_constraints(x, u, bounds):
+def state_constraints_alm(x, u, bounds):
+    global sampling_time, T
+    # bounds = [x_min, x_max, x_dot_min, x_dot_max]
+    #x_min = bounds[0]
+    #x_max = bounds[1]
+    #x_dot_min = bounds[2]
+    #x_dot_max = bounds[3]
+    x_min = -2.5
+    x_max = 5.0
+    x_dot_min = -7.5
+    x_dot_max = 7.5
+    c_min = [x_min, x_dot_min]*T
+    c_max = [x_max, x_dot_max]*T
+    f1 = []
+    x_t = x
+    for i in range(T):
+        #f1 = cs.vertcat(f1, cs.fmax(0, x_t[0] - x_max))
+        #f1 = cs.vertcat(f1, cs.fmax(0, x_min - x_t[0]))
+        #f1 = cs.vertcat(f1, cs.fmax(0, x_t[2] - x_dot_max))
+        #f1 = cs.vertcat(f1, cs.fmax(0, x_dot_min - x_t[2]))
+        #x_t = dynamics_dt(x_t, u[i], sampling_time)
+
+        f1 = cs.vertcat(f1, x_t[0])
+        f1 = cs.vertcat(f1, x_t[2])
+        x_t = dynamics_dt(x_t, u[i], sampling_time)
+
+    #C = og.constraints.Zero()
+    C = og.constraints.Rectangle(c_min, c_max)
+    return f1, C
+
+def state_constraints_pm(x, u, bounds):
     global sampling_time, T
     # bounds = [x_min, x_max, x_dot_min, x_dot_max]
     x_min = bounds[0]
     x_max = bounds[1]
     x_dot_min = bounds[2]
     x_dot_max = bounds[3]
-    f1 = []
+    f2 = []
     x_t = x
     for i in range(T):
-        f1 = cs.vertcat(f1, cs.fmax(0, x_t[0] - x_max))
-        f1 = cs.vertcat(f1, cs.fmax(0, x_min - x_t[0]))
-        f1 = cs.vertcat(f1, cs.fmax(0, x_t[2] - x_dot_max))
-        f1 = cs.vertcat(f1, cs.fmax(0, x_dot_min - x_t[2]))
+        f2 = cs.vertcat(f2, cs.fmax(0, x_t[0] - x_max))
+        f2 = cs.vertcat(f2, cs.fmax(0, x_min - x_t[0]))
+        f2 = cs.vertcat(f2, cs.fmax(0, x_t[2] - x_dot_max))
+        f2 = cs.vertcat(f2, cs.fmax(0, x_dot_min - x_t[2]))
         x_t = dynamics_dt(x_t, u[i], sampling_time)
 
-    C = og.constraints.Zero()
-    return f1, C
+    return f2
 
 def dynamics_ct(x, u):
     dx1 = x[2]
@@ -100,13 +129,16 @@ umin = [-15] * T
 umax = [15] * T
 
 bounds = og.constraints.Rectangle(umin, umax)
-f1, C = state_constraints(x0, u_seq, state_bounds)
+f1, C = state_constraints_alm(x0, u_seq, state_bounds)
+#f2 = state_constraints_pm(x0, u_seq, state_bounds)
 
 problem = og.builder.Problem(optimization_variables,
                              optimization_parameters,
                              total_cost) \
     .with_constraints(bounds) \
     .with_aug_lagrangian_constraints(f1, C)
+    #.with_penalty_constraints(f2) 
+    #.with_aug_lagrangian_constraints(f1, C)
 
 build_dir_name = "python_cartpole_original_constraint"
 build_config = og.config.BuildConfiguration()  \
@@ -118,8 +150,8 @@ meta = og.config.OptimizerMeta().with_optimizer_name(opt_name.replace(".", "_"))
 
 solver_config = og.config.SolverConfiguration()\
     .with_tolerance(1e-6)\
-    .with_initial_tolerance(1e-6) \
-    .with_max_duration_micros(100000)
+    .with_initial_tolerance(1e-6)
+    #.with_max_duration_micros(100000)
 
 builder = og.builder.OpEnOptimizerBuilder(problem, meta,
                                           build_config, solver_config)

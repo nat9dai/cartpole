@@ -14,6 +14,8 @@ Line2D._us_dashSeq    = property(lambda self: self._dash_pattern[1])
 Line2D._us_dashOffset = property(lambda self: self._dash_pattern[0])
 Legend._ncol = property(lambda self: self._ncols)
 
+plt.rcParams['font.family'] = 'Times New Roman'
+
 sampler_period = 0.05
 sampling_time_sim = 0.001
 simulation_steps = int(20 / sampling_time_sim)
@@ -205,6 +207,6 @@ plt.grid(True)
 plt.legend(loc='upper right', bbox_to_anchor=(1, 0.9))
 plt.xlim(left=0, right=right_limit)  # Set both left and right limits for the x-axis
 plt.tight_layout()
-tikzplotlib.save("icp_solve_time.tex")
+#tikzplotlib.save("icp_solve_time.tex")
 
 plt.show()
