@@ -90,7 +90,7 @@ for i in range(0,T):
         integral += (lambda_**(j+N*i))*stage_cost_2(x_t, Q)
         total_cost += integral / (6*N)
         if (j % (N / N_P) == (N / N_P) - 1):
-            total_cost += (lambda_**(j+N*i))*(0.1/N_P)*u_seq[u_index]**2
+            total_cost += (0.1/N_P)*u_seq[u_index]**2
             u_index += 1
 
 total_cost += (lambda_**(N+N*T))*terminal_cost(x_t, Qt)
