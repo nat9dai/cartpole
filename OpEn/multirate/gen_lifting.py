@@ -22,15 +22,16 @@ def state_constraints_alm(x, u):
     x_max = 7.0
     x_dot_min = -15.0
     x_dot_max = 15.0
-    c_min = [x_min, x_dot_min]*T
-    c_max = [x_max, x_dot_max]*T
+    c_min = [x_min, x_dot_min]*T*N
+    c_max = [x_max, x_dot_max]*T*N
     f1 = []
     x_t = x
     
     for i in range(T):
-        f1 = cs.vertcat(f1, x_t[0])
-        f1 = cs.vertcat(f1, x_t[2])
-        x_t = dynamics_dt(x_t, u[i], sampling_time)
+        for _ in range(N):
+            f1 = cs.vertcat(f1, x_t[0])
+            f1 = cs.vertcat(f1, x_t[2])
+            x_t = dynamics_dt(x_t, u[i], sampling_time)
 
     C = og.constraints.Rectangle(c_min, c_max)
     return f1, C
