@@ -31,7 +31,7 @@ def state_constraints_alm(x, u):
         for _ in range(N):
             f1 = cs.vertcat(f1, x_t[0])
             f1 = cs.vertcat(f1, x_t[2])
-            x_t = dynamics_dt(x_t, u[i], sampling_time)
+            x_t = dynamics_dt(x_t, u[i], sampling_time/N)
 
     C = og.constraints.Rectangle(c_min, c_max)
     return f1, C
